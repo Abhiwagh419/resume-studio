@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Resume Studio — Resume Builder</title>
+
+<!-- Sortable for drag-and-drop + html2pdf for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  :root{
+    --bg:#f0f4f8; --card:#fff; --accent:#3b82f6; --text:#0b1220; --muted:#64748b;
+  }
+  body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  .app{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:360px 1fr;gap:20px}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  header h1{font-size:20px;margin:0}
+  header .meta{color:var(--muted);font-size:13px}
+  .panel{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,0.05);}
+  label{display:block;font-weight:600;margin-bottom:6px}
+  input, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e2e8f0;background:#fafafa;box-sizing:border-box;margin-bottom:8px;}
+  textarea{min-height:64px;resize:vertical;}
+  .btn{padding:8px 12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;margin-top:4px;}
+  .btn.secondary{background:#475569;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .tag{background:#eef2ff;color:#083e8a;padding:6px 10px;border-radius:999px;font-weight:600;cursor:pointer;}
+  .tag:hover{opacity:0.85;}
+  .templates{display:flex;gap:10px;margin-top:12px;}
+  .tpl{flex:1;cursor:pointer;border-radius:10px;padding:8px;border:1px solid #e2e8f0;background:#fff;text-align:center;transition:all 0.2s;}
+  .tpl.active{box-shadow:0 10px 30px rgba(59,130,246,0.12);border-color:var(--accent);transform:translateY(-4px);}
+  .tpl img{width:100%;height:72px;object-fit:cover;border-radius:8px;display:block;margin-bottom:8px;}
+  .workspace{display:flex;flex-direction:column;gap:12px;}
+  .editor{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,0.04);}
+  .sections{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+  .section-item{background:#f9f9f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px;display:flex;gap:10px;align-items:flex-start;}
+  .drag-handle{width:28px;height:28px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:grab;}
+  .section-body{flex:1}
+  .section-body input, .section-body textarea{width:100%;border:1px solid #e2e8f0;padding:8px;border-radius:8px;background:#fff;}
+  .preview-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(2,6,23,0.06);min-height:640px;position:relative;overflow:hidden;}
+  .preview-toolbar{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .preview-area{
+  background:#fff;
+  border-radius:8px;
+  padding:24px;
+  border:1px solid #e2e8f0;
+
+  width:794px;
+  min-height:1120px;
+  margin:0 auto;
+  box-sizing:border-box;
+}
+
+  footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;margin-top:16px}
+  @media (max-width:1000px){.app{grid-template-columns:1fr;}.tpl{width:32%;}}
+  #printArea { 
+  min-height: 1120px;
+  box-sizing: border-box;
+}
+
+#printArea {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  display: block !important;
+}
+
+body {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+.resume-wrapper,
+.resume-container,
+.template,
+.preview {
+  min-height: auto !important;
+  height: auto !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+.section-item {
+  page-break-inside: avoid;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Resume Studio</h1>
+      <div class="meta tiny">Resume maker — live preview · templates · drag & drop · PDF export</div>
+    </div>
+    <div class="tiny">Tip: Choose a template, edit fields, then Download PDF.</div>
+  </header>
+
+  <!-- LEFT PANEL -->
+  <aside class="panel">
+    <div style="margin-bottom:12px">
+      <label for="name">Full name</label>
+      <input id="name" type="text" placeholder="Abhishek Wagh" value="Abhishek Wagh">
+    </div>
+    <div style="margin-bottom:12px">
+      <label for="title">Title / Role</label>
+      <input id="title" type="text" placeholder="Your role" value="Computer Engineering Student">
+    </div>
+    <div style="margin-bottom:12px">
+      <label for="contact">Contact (email / phone / url)</label>
+      <input id="contact" type="text" placeholder="email • phone • github" value="wabhi2009@gmail.com • Mumbai">
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Skills</label>
+      <div style="display:flex;gap:8px">
+        <input id="skillInput" type="text" placeholder="Add skill e.g. C, Python" />
+        <button id="addSkillBtn" class="btn">Add</button>
+      </div>
+      <div id="tags" class="tags" aria-live="polite"></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Templates</label>
+      <div class="templates" role="list">
+        <div class="tpl active" data-template="classic" role="listitem">
+          <img src="https://via.placeholder.com/600x360?text=Classic">
+          <div class="tiny">Classic</div>
+        </div>
+        <div class="tpl" data-template="modern" role="listitem">
+          <img src="https://via.placeholder.com/600x360?text=Modern">
+          <div class="tiny">Modern</div>
+        </div>
+        <div class="tpl" data-template="creative" role="listitem">
+          <img src="https://via.placeholder.com/600x360?text=Creative">
+          <div class="tiny">Creative</div>
+        </div>
+        <div class="tpl" data-template="minimal" role="listitem">
+          <img src="https://via.placeholder.com/600x360?text=Minimal">
+          <div class="tiny">Minimal</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label class="tiny">Sections</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button id="addSection" class="btn">+ Section</button>
+        <button id="saveBtn" class="btn secondary">Save</button>
+        <button id="loadBtn" class="btn secondary">Load</button>
+        <button id="resetBtn" class="btn secondary">Reset</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT: workspace -->
+  <main class="workspace">
+    <div class="editor panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Document Sections</h3>
+        <div class="tiny muted">Drag to reorder. Live preview updates as you edit.</div>
+      </div>
+      <div id="sectionsList" class="sections"></div>
+    </div>
+
+    <div class="preview-card panel">
+      <div class="preview-toolbar">
+        <div class="muted tiny">Chosen template: <strong id="currentTpl">Classic</strong></div>
+        <div>
+          <button id="download" class="btn">Download PDF</button>
+          <button id="print" class="btn secondary">Print</button>
+        </div>
+      </div>
+      <div class="preview-area" id="printArea"></div>
+    </div>
+  </main>
+
+  <footer>© Resume Studio — Designed By Abhishek Wagh</footer>
+</div>
+
+<script>
+const qs = (s, root=document) => root.querySelector(s);
+const qsa = (s, root=document) => Array.from(root.querySelectorAll(s));
+
+const nameInput = qs('#name'), titleInput = qs('#title'), contactInput = qs('#contact');
+const skillInput = qs('#skillInput'), addSkillBtn = qs('#addSkillBtn'), tagsEl = qs('#tags');
+const tplEls = qsa('.tpl'), currentTplLabel = qs('#currentTpl');
+const addSectionBtn = qs('#addSection'), sectionsList = qs('#sectionsList');
+const printArea = qs('#printArea'), downloadBtn = qs('#download');
+const saveBtn = qs('#saveBtn'), loadBtn = qs('#loadBtn'), resetBtn = qs('#resetBtn');
+const printBtn = qs('#print');
+
+let data = {
+  template:'classic',
+  name:'Abhishek Wagh',
+  title:'Computer Engineering Student',
+  contact:'wabhi2009@gmail.com • Mumbai',
+  skills:['C','C++','Python'],
+  sections:[
+    {id:genId(), title:'Education', content:'Diploma — Government Polytechnic Mumbai\n2024-2026'},
+    {id:genId(), title:'Projects', content:'Subnet Calculator — IP subnetting tool\nEmbedded Energy Monitor — ESP32 + MQTT'}
+  ]
+};
+
+function genId(){return 's_'+Math.random().toString(36).slice(2,9);}
+function escapeHtml(s=''){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+function renderSkills(){
+  tagsEl.innerHTML='';
+  data.skills.forEach((s,idx)=>{
+    const t = document.createElement('div');
+    t.className='tag'; t.textContent = s; t.title='Click to remove';
+    t.addEventListener('click', ()=>{ data.skills.splice(idx,1); renderAll(); });
+    tagsEl.appendChild(t);
+  });
+}
+
+addSkillBtn.addEventListener('click', ()=>{
+  const v = skillInput.value.trim();
+  if(!v) return; data.skills.push(v); skillInput.value=''; renderAll();
+});
+
+function createSectionItem(section){
+  const el = document.createElement('div'); el.className='section-item'; el.dataset.id=section.id;
+  el.innerHTML = `
+    <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+    <div class="section-body">
+      <input class="sec-title" value="${escapeHtml(section.title)}" placeholder="Section title">
+      <textarea class="sec-content" rows="4" placeholder="Section content">${escapeHtml(section.content)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn save-sec">Save</button>
+        <button class="btn secondary del-sec">Delete</button>
+      </div>
+    </div>
+  `;
+  el.querySelector('.save-sec').addEventListener('click', ()=>{
+    const idx = data.sections.findIndex(s=>s.id===section.id);
+    if(idx>=0){ data.sections[idx].title=el.querySelector('.sec-title').value; data.sections[idx].content=el.querySelector('.sec-content').value; renderAll(); }
+  });
+  el.querySelector('.del-sec').addEventListener('click', ()=>{
+    if(!confirm('Delete this section?')) return;
+    data.sections = data.sections.filter(s=>s.id!==section.id);
+    renderAll();
+  });
+  return el;
+}
+
+addSectionBtn.addEventListener('click', ()=>{
+  data.sections.push({id:genId(), title:'New Section', content:'Details...'});
+  renderAll();
+});
+
+function initSortable(){
+  Sortable.create(sectionsList, {
+    handle: '.drag-handle',
+    animation: 150,
+    onEnd: ()=>{ 
+      const ids = qsa('.section-item').map(x=>x.dataset.id);
+      data.sections = ids.map(id => data.sections.find(s=>s.id===id));
+      renderAll();
+    }
+  });
+}
+
+tplEls.forEach(t=>t.addEventListener('click', ()=>{
+  tplEls.forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  data.template = t.dataset.template;
+  currentTplLabel.textContent = t.querySelector('.tiny').textContent.trim();
+  renderAll();
+}));
+
+function renderPreview(){
+  const tpl = data.template;
+  
+  const skillsHtml = data.skills.map(s=>`
+    <span style="
+      display:inline-block;
+      margin:2px 4px;
+      padding:3px 6px;
+      background:transparent;
+      border:1px solid #cbd5f5;
+      border-radius:999px;
+      font-size:12px;
+    ">
+      ${escapeHtml(s)}
+    </span>
+  `).join('');
+
+  const sectionsHtml = data.sections.map(s=>`
+    <div style="margin-bottom:10px">
+      <div style="font-weight:700">${escapeHtml(s.title)}</div>
+      <div style="white-space:pre-line;color:#334155">${escapeHtml(s.content)}</div>
+    </div>
+  `).join('');
+
+  let html='';
+
+  if(tpl==='classic'){
+    html = `
+      <div style="font-family:Arial">
+        <h2>${escapeHtml(data.name)}</h2>
+        <div>${escapeHtml(data.title)} | ${escapeHtml(data.contact)}</div>
+        <div style="margin-top:6px">${skillsHtml}</div>
+        <div style="margin-top:10px">${sectionsHtml}</div>
+      </div>`;
+  } 
+  else if(tpl==='modern'){
+    html = `
+      <div style="font-family:Arial;text-align:center">
+        <h2>${escapeHtml(data.name)}</h2>
+        <div>${escapeHtml(data.title)}</div>
+        <div style="color:#64748b">${escapeHtml(data.contact)}</div>
+        <div style="margin-top:10px">${skillsHtml}</div>
+        <div style="margin-top:10px">${sectionsHtml}</div>
+      </div>`;
+  } 
+  else if(tpl==='creative'){
+    html = `
+      <div style="display:flex;gap:12px;font-family:Arial">
+        <div style="flex:1">
+          <h2>${escapeHtml(data.name)}</h2>
+          <div>${escapeHtml(data.title)}</div>
+          <div style="margin-top:6px">${skillsHtml}</div>
+          <div style="margin-top:6px;color:#64748b">${escapeHtml(data.contact)}</div>
+        </div>
+        <div style="flex:2">${sectionsHtml}</div>
+      </div>`;
+  } 
+  else if(tpl==='minimal'){
+    html = `
+      <div style="font-family:Arial">
+        <h2 style="font-weight:700">${escapeHtml(data.name)}</h2>
+        <div>${escapeHtml(data.title)}</div>
+        <div style="margin-bottom:10px">${escapeHtml(data.contact)}</div>
+        <div>${skillsHtml}</div>
+        <div style="margin-top:10px">${sectionsHtml}</div>
+      </div>`;
+  }
+
+  printArea.innerHTML = html;
+}
+  
+function renderAll(){
+  nameInput.value = data.name;
+  titleInput.value = data.title;
+  contactInput.value = data.contact;
+  renderSkills();
+  sectionsList.innerHTML='';
+  data.sections.forEach(s=>sectionsList.appendChild(createSectionItem(s)));
+  initSortable();
+  renderPreview();
+  bindInputs();
+}
+
+function bindInputs(){
+  nameInput.oninput=()=>{data.name=nameInput.value; renderPreview();}
+  titleInput.oninput=()=>{data.title=titleInput.value; renderPreview();}
+  contactInput.oninput=()=>{data.contact=contactInput.value; renderPreview();}
+  skillInput.onkeypress=(e)=>{if(e.key==='Enter'){e.preventDefault();addSkillBtn.click();}};
+}
+async function exportPDF(){
+  const source = document.getElementById("printArea");
+
+  const clone = source.cloneNode(true);
+
+  clone.style.transform = "none";
+  clone.style.position = "static";
+  clone.style.animation = "none";
+  clone.style.transition = "none";
+  clone.style.background = "#ffffff";
+  clone.style.color = "#111";
+
+  clone.querySelectorAll("*").forEach(el=>{
+    el.style.transform = "none";
+    el.style.position = "static";
+    el.style.animation = "none";
+    el.style.transition = "none";
+    el.style.boxShadow = "none";
+    el.style.filter = "none";
+  });
+
+  const holder = document.createElement("div");
+  holder.style.position = "fixed";
+  holder.style.left = "-10000px";
+  holder.style.top = "0";
+  holder.style.width = "794px";
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  await html2pdf().set({
+    margin: 10,
+    filename: "Resume.pdf",
+
+    pagebreak: { mode: ['css', 'legacy'] }, 
+
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  }).from(clone).save();
+
+  document.body.removeChild(holder);
+}
+
+downloadBtn.addEventListener('click', async()=>{
+  downloadBtn.disabled=true; downloadBtn.textContent='Generating…';
+  await exportPDF();
+  downloadBtn.disabled=false; downloadBtn.textContent='Download PDF';
+});
+
+printBtn.addEventListener('click', ()=>{
+  const w = window.open(''); w.document.write('<title>Print Resume</title>');
+  w.document.write('<style>body{font-family:Arial;margin:20px}</style>');
+  w.document.write(printArea.innerHTML); w.document.close(); w.focus(); w.print(); w.close();
+});
+
+saveBtn.addEventListener('click', ()=>{ localStorage.setItem('resume-data', JSON.stringify(data)); alert('Saved locally.'); });
+loadBtn.addEventListener('click', ()=>{ const s=localStorage.getItem('resume-data'); if(s){data=JSON.parse(s); renderAll(); alert('Loaded');} else alert('No saved data.'); });
+resetBtn.addEventListener('click', ()=>{ if(confirm('Reset everything?')){data={template:'classic',name:'Abhishek Wagh',title:'Computer Engineering Student',contact:'wabhi2009@gmail.com • Mumbai',skills:[],sections:[]}; renderAll();} });
+
+renderAll();
+</script>
+</body>
+</html>
