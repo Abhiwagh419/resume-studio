@@ -5,8 +5,7 @@ Resume Studio is a client-side web app to create professional resumes instantly.
 A dynamic, client-side web app to create professional resumes instantly.
 
 # Demo
-
-(Add your live demo link here, if hosted)
+https://abhiwagh419.github.io/resume-studio/
 
 # Features
 Live editing with real-time preview.
