@@ -35,5 +35,5 @@ Live preview updates instantly.
 Export as a clean, professional PDF.
 
 # Screenshots
+<img width="1191" height="902" alt="image" src="https://github.com/user-attachments/assets/be4cea34-044b-499f-9d3b-61236b6b34cd" />
 
-(Add screenshots of different templates and live preview here)
